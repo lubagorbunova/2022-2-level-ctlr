@@ -3,7 +3,7 @@ Crawler implementation
 """
 from typing import Pattern, Union
 
-
+'''a comment for a pull request'''
 class Config:
     """
     Unpacks and validates configurations
