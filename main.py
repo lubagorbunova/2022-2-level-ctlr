@@ -37,5 +37,26 @@ def main():
     print(all_links)
     print(len(all_links))
 
+    '''
+    1. get a request to an article page
+    2. create a BeautifulSoup instance on top of the response
+    3. find the title + all the article text
+    '''
+
+def main_new():
+    url = 'https://primamedia.ru/news/1482532/?from=37'
+    response = requests.get(url, headers={'user-agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36'})
+    print(response.status_code)
+
+    main_bs = BeautifulSoup(response.text, 'lxml')
+    print(main_bs)
+    #title_bs = main_bs.find_all('h1', class_='page_fullnews exis-photo')
+    title_bs = main_bs.find_all('h1')
+    print(title_bs, type(title_bs))
+
+    body_bs = main_bs.find_all('div', class_='page-content')[0]
+    all_paragraphs = body_bs.find_all('p')
+    print(len(all_paragraphs))
+
 if __name__ == '__main__':
-    main()
+    main_new()
