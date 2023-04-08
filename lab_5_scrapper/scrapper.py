@@ -10,6 +10,8 @@ from core_utils.constants import CRAWLER_CONFIG_PATH, ASSETS_PATH
 from pathlib import Path
 import requests
 from bs4 import BeautifulSoup
+import datetime
+from core_utils.article.article import Article
 
 
 class IncorrectSeedURLError(Exception):
@@ -190,19 +192,31 @@ class Crawler:
         """
         Finds and retrieves URL from HTML
         """
-        pass
+        all_links_bs = article_bs.find_all('a')
+        for link_bs in all_links_bs:
+            link = link_bs.get('href')
+            if link is None:
+                continue
+            elif link[0:8] == 'https://' and 'news' in link and 'from' in link:
+                return link
+        return ''
 
     def find_articles(self) -> None:
         """
         Finds articles
         """
-        pass
+        for seed_url in self.seed_urls:
+            response = make_request(seed_url, self.config)
+            main_bs = BeautifulSoup(response.text, 'lxml')
+            link = self._extract_url(main_bs)
+            if link:
+                self.urls.append(link)
 
     def get_search_urls(self) -> list:
         """
         Returns seed_urls param
         """
-        pass
+        return self.seed_urls
 
 
 class HTMLParser:
@@ -214,13 +228,17 @@ class HTMLParser:
         """
         Initializes an instance of the HTMLParser class
         """
-        pass
+        self.full_url = full_url
+        self.article_id = article_id
+        self.config = config
+        self.article = Article(full_url, article_id)
 
     def _fill_article_with_text(self, article_soup: BeautifulSoup) -> None:
         """
         Finds text of article
         """
-        pass
+        body_bs = article_soup.find_all('div', class_='page-content')[0]
+        all_paragraphs = body_bs.find_all('p')
 
     def _fill_article_with_meta_information(self, article_soup: BeautifulSoup) -> None:
         """
@@ -238,8 +256,10 @@ class HTMLParser:
         """
         Parses each article
         """
-        pass
-
+        response = make_request(self.full_url, self.config)
+        main_bs = BeautifulSoup(response.text, 'lxml')
+        self._fill_article_with_text(main_bs)
+        return self.article
 
 def prepare_environment(base_path: Union[Path, str]) -> None:
     """
