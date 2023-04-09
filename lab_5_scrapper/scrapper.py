@@ -77,7 +77,6 @@ class Config:
         self.path_to_config = path_to_config
         self.config = self._extract_config_content()
         self._validate_config_content()
-        pass
 
     def _extract_config_content(self) -> ConfigDTO:
         """
@@ -106,20 +105,29 @@ class Config:
         Ensure configuration parameters
         are not corrupt
         """
+        if not isinstance(self.config.seed_urls, list):
+            raise IncorrectSeedURLError
         for seed_url in self.config.seed_urls:
-            response = requests.get(seed_url)
-            if not re.match(r'https?://.*/', seed_url) or not response.status_code == 520:
+            if not isinstance(seed_url, str):
                 raise IncorrectSeedURLError
+            response = requests.get(seed_url)
+            if re.match(r'https://.*/', seed_url) is None:
+                # or not response.status_code == 200:
+                raise IncorrectSeedURLError
+
+        if not type(self.config.total_articles) == int or self.config.total_articles < 0:
+            raise IncorrectNumberOfArticlesError
         if self.config.total_articles > 150 or self.config.total_articles < 1:
             raise NumberOfArticlesOutOfRangeError
-        if not isinstance(self.config.total_articles, int):
-            raise IncorrectNumberOfArticlesError
+
         if not isinstance(self.config.headers, dict):
             raise IncorrectHeadersError
         if not isinstance(self.config.encoding, str):
             raise IncorrectEncodingError
         if not isinstance(self.config.timeout, int) or self.config.timeout < 0 or self.config.timeout > 60:
             raise IncorrectTimeoutError
+        if not isinstance(self.config.headless_mode, bool):
+            raise IncorrectVerifyError
         if not(self.config.should_verify_certificate is True or self.config.should_verify_certificate is False):
             raise IncorrectVerifyError
 
@@ -157,7 +165,7 @@ class Config:
         """
         Retrieve whether to verify certificate
         """
-        return self.config.verify_certificate
+        return self.config.should_verify_certificate
 
     def get_headless_mode(self) -> bool:
         """
@@ -219,8 +227,10 @@ class Crawler:
         """
         Returns seed_urls param
         """
-        #return self.seed_urls
-        return self.urls
+        return self.seed_urls
+        #return self.urls
+
+
 
 
 class HTMLParser:
@@ -243,7 +253,7 @@ class HTMLParser:
         """
         gff=article_soup.find_all('div', class_='page-content')
         body_bs = gff[0]
-        all_paragraphs = body_bs.find_all('p')
+        all_paragraphs = str(body_bs.find_all('p'))
         self.article.text = all_paragraphs
 
     def _fill_article_with_meta_information(self, article_soup: BeautifulSoup) -> None:
@@ -273,8 +283,7 @@ def prepare_environment(base_path: Union[Path, str]) -> None:
     """
     if os.path.isdir(ASSETS_PATH):
         shutil.rmtree(ASSETS_PATH)
-    else:
-        os.makedirs(ASSETS_PATH)
+    os.makedirs(ASSETS_PATH)
 
 
 def main() -> None:
@@ -285,7 +294,7 @@ def main() -> None:
     prepare_environment(ASSETS_PATH)
     crawler = Crawler(config=configuration)
     crawler.find_articles()
-    urls = crawler.get_search_urls()
+    urls = crawler.urls
     for i in range(len(urls)):
         parser = HTMLParser(full_url=urls[i], article_id=i, config=configuration)
         article = parser.parse()
