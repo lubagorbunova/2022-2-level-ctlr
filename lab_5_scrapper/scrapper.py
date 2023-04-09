@@ -64,6 +64,10 @@ class IncorrectVerifyError(Exception):
     """
     pass
 
+class UnavailableWebsiteError(Exception):
+    """
+    Website doesn't respond
+    """
 
 class Config:
     """
@@ -181,7 +185,10 @@ def make_request(url: str, config: Config) -> requests.models.Response:
     """
     headers = config.get_headers()
     timeout = config.get_timeout()
-    return requests.get(url=url, headers=headers, timeout=timeout)
+    response = requests.get(url=url, headers=headers, timeout=timeout)
+    if not response.status_code == 200:
+        raise Exception
+    return response
 
 
 class Crawler:
@@ -196,7 +203,7 @@ class Crawler:
         Initializes an instance of the Crawler class
         """
         self.config = config
-        self.seed_urls = config.get_seed_urls()
+        self._seed_urls = config.get_seed_urls()
         self.urls = []
 
     def _extract_url(self, article_bs: BeautifulSoup) -> str:
@@ -216,19 +223,21 @@ class Crawler:
         """
         Finds articles
         """
-        for seed_url in self.seed_urls:
-            response = make_request(seed_url, self.config)
-            main_bs = BeautifulSoup(response.text, 'lxml')
-            link = self._extract_url(main_bs)
-            if link:
-                self.urls.append(link)
+        for seed_url in self._seed_urls:
+            try:
+                response = make_request(seed_url, self.config)
+                main_bs = BeautifulSoup(response.text, 'lxml')
+                link = self._extract_url(main_bs)
+                if link:
+                    self.urls.append(link)
+            except UnavailableWebsiteError:
+                continue
 
     def get_search_urls(self) -> list:
         """
         Returns seed_urls param
         """
-        return self.seed_urls
-        #return self.urls
+        return self._seed_urls
 
 
 
