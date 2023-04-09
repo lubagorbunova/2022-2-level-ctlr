@@ -12,6 +12,8 @@ import requests
 from bs4 import BeautifulSoup
 import datetime
 from core_utils.article.article import Article
+from core_utils.article.io import to_raw
+import shutil
 
 
 class IncorrectSeedURLError(Exception):
@@ -90,34 +92,35 @@ class Config:
             timeout = config_content['timeout']
             should_verify_certificate = config_content['should_verify_certificate']
             headless_mode = config_content['headless_mode']
-        return ConfigDTO(seed_urls=seed_urls,
-                         total_articles_to_find_and_parse=total_articles_to_find_and_parse,
-                         headers=headers,
-                         encoding=encoding,
-                         timeout=timeout,
-                         should_verify_certificate=should_verify_certificate,
-                         headless_mode=headless_mode)
+        config = ConfigDTO(seed_urls=seed_urls,
+                           total_articles_to_find_and_parse=total_articles_to_find_and_parse,
+                           headers=headers,
+                           encoding=encoding,
+                           timeout=timeout,
+                           should_verify_certificate=should_verify_certificate,
+                           headless_mode=headless_mode)
+        return config
 
     def _validate_config_content(self) -> None:
         """
         Ensure configuration parameters
         are not corrupt
         """
-        for seed_url in ConfigDTO.seed_urls:
-            response = requests.get(seed_url, headers={'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36'})
+        for seed_url in self.config.seed_urls:
+            response = requests.get(seed_url)
             if not re.match(r'https?://.*/', seed_url) or not response.status_code == 520:
                 raise IncorrectSeedURLError
-        if ConfigDTO.total_articles_to_find_and_parse > 150 or ConfigDTO.total_articles_to_find_and_parse < 1:
+        if self.config.total_articles > 150 or self.config.total_articles < 1:
             raise NumberOfArticlesOutOfRangeError
-        if not isinstance(ConfigDTO.total_articles_to_find_and_parse, int):
+        if not isinstance(self.config.total_articles, int):
             raise IncorrectNumberOfArticlesError
-        if not isinstance(ConfigDTO.headers, dict):
+        if not isinstance(self.config.headers, dict):
             raise IncorrectHeadersError
-        if not isinstance(ConfigDTO.encoding, str):
+        if not isinstance(self.config.encoding, str):
             raise IncorrectEncodingError
-        if not isinstance(ConfigDTO.timeout, int) or ConfigDTO.timeout<0 or ConfigDTO.timeout>60:
+        if not isinstance(self.config.timeout, int) or self.config.timeout < 0 or self.config.timeout > 60:
             raise IncorrectTimeoutError
-        if not(ConfigDTO.verify_certificate is True or ConfigDTO.verify_certificate is False):
+        if not(self.config.should_verify_certificate is True or self.config.should_verify_certificate is False):
             raise IncorrectVerifyError
 
     def get_seed_urls(self) -> list[str]:
@@ -216,7 +219,8 @@ class Crawler:
         """
         Returns seed_urls param
         """
-        return self.seed_urls
+        #return self.seed_urls
+        return self.urls
 
 
 class HTMLParser:
@@ -237,8 +241,10 @@ class HTMLParser:
         """
         Finds text of article
         """
-        body_bs = article_soup.find_all('div', class_='page-content')[0]
+        gff=article_soup.find_all('div', class_='page-content')
+        body_bs = gff[0]
         all_paragraphs = body_bs.find_all('p')
+        self.article.text = all_paragraphs
 
     def _fill_article_with_meta_information(self, article_soup: BeautifulSoup) -> None:
         """
@@ -266,12 +272,9 @@ def prepare_environment(base_path: Union[Path, str]) -> None:
     Creates ASSETS_PATH folder if no created and removes existing folder
     """
     if os.path.isdir(ASSETS_PATH):
-        for file_name in os.listdir(ASSETS_PATH):
-            file = ASSETS_PATH + file_name
-            if os.path.isfile(file):
-                os.remove(file)
+        shutil.rmtree(ASSETS_PATH)
     else:
-        os.mkdir(path=ASSETS_PATH)
+        os.makedirs(ASSETS_PATH)
 
 
 def main() -> None:
@@ -279,8 +282,14 @@ def main() -> None:
     Entrypoint for scrapper module
     """
     configuration = Config(path_to_config=CRAWLER_CONFIG_PATH)
+    prepare_environment(ASSETS_PATH)
     crawler = Crawler(config=configuration)
-    pass
+    crawler.find_articles()
+    urls = crawler.get_search_urls()
+    for i in range(len(urls)):
+        parser = HTMLParser(full_url=urls[i], article_id=i, config=configuration)
+        article = parser.parse()
+        to_raw(article)
 
 
 if __name__ == "__main__":
