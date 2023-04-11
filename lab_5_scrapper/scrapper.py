@@ -219,8 +219,8 @@ class Crawler:
             if link is None:
                 continue
             elif link[0:8] == 'https://' and 'news' in link and 'from' in link:
-                #links.append(link)
-                return link
+                self.urls.append(link)
+                #return link
         return ''
 
     def find_articles(self) -> None:
@@ -231,9 +231,7 @@ class Crawler:
             try:
                 response = make_request(seed_url, self.config)
                 main_bs = BeautifulSoup(response.text, 'lxml')
-                link = self._extract_url(main_bs)
-                if link:
-                    self.urls.append(link)
+                self._extract_url(main_bs)
             except UnavailableWebsiteError:
                 continue
 
