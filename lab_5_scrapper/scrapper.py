@@ -213,11 +213,13 @@ class Crawler:
         Finds and retrieves URL from HTML
         """
         all_links_bs = article_bs.find_all('a')
+        #links = []
         for link_bs in all_links_bs:
             link = link_bs.get('href')
             if link is None:
                 continue
             elif link[0:8] == 'https://' and 'news' in link and 'from' in link:
+                #links.append(link)
                 return link
         return ''
 
@@ -240,8 +242,6 @@ class Crawler:
         Returns seed_urls param
         """
         return self._seed_urls
-
-
 
 
 class HTMLParser:
@@ -306,8 +306,8 @@ def main() -> None:
     crawler = Crawler(config=configuration)
     crawler.find_articles()
     urls = crawler.urls
-    for i in range(len(urls)):
-        parser = HTMLParser(full_url=urls[i], article_id=i, config=configuration)
+    for i, url in enumerate(urls):
+        parser = HTMLParser(full_url=url, article_id=i+1, config=configuration)
         article = parser.parse()
         to_raw(article)
 
