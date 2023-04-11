@@ -273,7 +273,7 @@ class HTMLParser:
         """
         try:
             self.article.title = article_soup.find('h1').get_text()
-            self.article.author = article_soup.find(class_='deflt-blk').get_text()
+            self.article.author = ["NOT FOUND"]
             self.article.topics = article_soup.find(class_='fn-rubric-a').get_text()
         except:
             pass
