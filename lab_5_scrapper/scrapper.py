@@ -81,6 +81,12 @@ class Config:
         self.path_to_config = path_to_config
         self.config = self._extract_config_content()
         self._validate_config_content()
+        self._seed_urls = self.config.seed_urls
+        self._num_articles = self.config.total_articles
+        self._headers = self.config.headers
+        self._encoding = self.config.encoding
+        self._timeout = self.config.timeout
+        self._should_verify_certificate = self.config.should_verify_certificate
 
     def _extract_config_content(self) -> ConfigDTO:
         """
@@ -112,11 +118,7 @@ class Config:
         if not isinstance(self.config.seed_urls, list):
             raise IncorrectSeedURLError
         for seed_url in self.config.seed_urls:
-            if not isinstance(seed_url, str):
-                raise IncorrectSeedURLError
-            response = requests.get(seed_url)
-            if re.match(r'https://.*/', seed_url) is None:
-                # or not response.status_code == 200:
+            if not isinstance(seed_url, str) or re.match(r'https://.*/', seed_url) is None:
                 raise IncorrectSeedURLError
 
         if not type(self.config.total_articles) == int or self.config.total_articles < 0:
@@ -139,37 +141,37 @@ class Config:
         """
         Retrieve seed urls
         """
-        return self.config.seed_urls
+        return self._seed_urls
 
     def get_num_articles(self) -> int:
         """
         Retrieve total number of articles to scrape
         """
-        return self.config.total_articles
+        return self._num_articles
 
     def get_headers(self) -> dict[str, str]:
         """
         Retrieve headers to use during requesting
         """
-        return self.config.headers
+        return self._headers
 
     def get_encoding(self) -> str:
         """
         Retrieve encoding to use during parsing
         """
-        return self.config.encoding
+        return self._encoding
 
     def get_timeout(self) -> int:
         """
         Retrieve number of seconds to wait for response
         """
-        return self.config.timeout
+        return self._timeout
 
     def get_verify_certificate(self) -> bool:
         """
         Retrieve whether to verify certificate
         """
-        return self.config.should_verify_certificate
+        return self._should_verify_certificate
 
     def get_headless_mode(self) -> bool:
         """
@@ -186,8 +188,8 @@ def make_request(url: str, config: Config) -> requests.models.Response:
     headers = config.get_headers()
     timeout = config.get_timeout()
     response = requests.get(url=url, headers=headers, timeout=timeout)
-    if not response.status_code == 200:
-        raise Exception
+    #if not response.status_code == 200:
+    #    raise Exception
     return response
 
 
