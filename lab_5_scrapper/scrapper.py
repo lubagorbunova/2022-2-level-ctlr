@@ -277,6 +277,7 @@ class HTMLParser:
             self.article.topics = article_soup.find(class_='fn-rubric-a').get_text()
         except:
             pass
+        # don't forget to change the way I find the date
         self.article.date = datetime.datetime.strptime('09/19/22 13:55:26', '%m/%d/%y %H:%M:%S')
 
     def unify_date_format(self, date_str: str) -> datetime.datetime:
@@ -296,13 +297,14 @@ class HTMLParser:
         self._fill_article_with_meta_information(main_bs)
         return self.article
 
+
 def prepare_environment(base_path: Union[Path, str]) -> None:
     """
     Creates ASSETS_PATH folder if no created and removes existing folder
     """
-    if os.path.isdir(ASSETS_PATH):
-        shutil.rmtree(ASSETS_PATH)
-    os.makedirs(ASSETS_PATH)
+    if os.path.isdir(base_path):
+        shutil.rmtree(base_path)
+    os.makedirs(base_path)
 
 
 def main() -> None:
