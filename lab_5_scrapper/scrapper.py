@@ -12,7 +12,7 @@ import requests
 from bs4 import BeautifulSoup
 import datetime
 from core_utils.article.article import Article
-from core_utils.article.io import to_raw
+from core_utils.article.io import to_raw, to_meta
 import shutil
 
 
@@ -260,21 +260,30 @@ class HTMLParser:
         """
         Finds text of article
         """
-        gff=article_soup.find_all('div', class_='page-content')
-        body_bs = gff[0]
-        all_paragraphs = str(body_bs.find_all('p'))
-        self.article.text = all_paragraphs
+        body_bs = article_soup.find_all('div', class_='page-content')[0]
+        all_paragraphs = body_bs.find_all('p')
+        texts = []
+        for paragraph in all_paragraphs:
+            texts.append(paragraph.text)
+        self.article.text = '\n'.join(texts)
 
     def _fill_article_with_meta_information(self, article_soup: BeautifulSoup) -> None:
         """
         Finds meta information of article
         """
-        pass
+        try:
+            self.article.title = article_soup.find('h1').get_text()
+            self.article.author = article_soup.find(class_='deflt-blk').get_text()
+            self.article.topics = article_soup.find(class_='fn-rubric-a').get_text()
+        except:
+            pass
+        self.article.date = datetime.datetime.strptime('09/19/22 13:55:26', '%m/%d/%y %H:%M:%S')
 
     def unify_date_format(self, date_str: str) -> datetime.datetime:
         """
         Unifies date format
         """
+
         pass
 
     def parse(self) -> Union[Article, bool, list]:
@@ -284,6 +293,7 @@ class HTMLParser:
         response = make_request(self.full_url, self.config)
         main_bs = BeautifulSoup(response.text, 'lxml')
         self._fill_article_with_text(main_bs)
+        self._fill_article_with_meta_information(main_bs)
         return self.article
 
 def prepare_environment(base_path: Union[Path, str]) -> None:
@@ -304,10 +314,12 @@ def main() -> None:
     crawler = Crawler(config=configuration)
     crawler.find_articles()
     urls = crawler.urls
-    for i, url in enumerate(urls):
-        parser = HTMLParser(full_url=url, article_id=i+1, config=configuration)
+    for i, url in enumerate(urls, start=1):
+        parser = HTMLParser(full_url=url, article_id=i, config=configuration)
         article = parser.parse()
-        to_raw(article)
+        if isinstance(article, Article):
+            to_raw(article)
+            to_meta(article)
 
 
 if __name__ == "__main__":
