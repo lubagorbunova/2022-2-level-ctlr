@@ -124,14 +124,12 @@ class Config:
         for seed_url in self.config.seed_urls:
             if not isinstance(seed_url, str) or re.match(r'https://.*/', seed_url) is None:
                 raise IncorrectSeedURLError
-
         if (not isinstance(self.config.total_articles, int)
                 or isinstance(self.config.total_articles, bool)
                 or self.config.total_articles < 0):
             raise IncorrectNumberOfArticlesError
         if self.config.total_articles > 150 or self.config.total_articles < 1:
             raise NumberOfArticlesOutOfRangeError
-
         if not isinstance(self.config.headers, dict):
             raise IncorrectHeadersError
         if not isinstance(self.config.encoding, str):
