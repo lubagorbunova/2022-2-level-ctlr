@@ -302,9 +302,10 @@ class HTMLParser:
             for key, value in month_dict.items():
                 if key in date_str:
                     date_str = date_str.replace(key, value)
-            return datetime.datetime.strptime(date_str, '%d %m, %H:%M')
+            res = datetime.datetime.strptime(date_str, '%d %m, %H:%M')
         else:
-            return datetime.datetime.strptime(date_str, '%H:%M')
+            res = datetime.datetime.strptime(date_str, '%H:%M')
+        return res
 
     def parse(self) -> Union[Article, bool, list]:
         """
