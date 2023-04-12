@@ -6,15 +6,18 @@ import json
 import os.path
 import re
 import shutil
+
 from typing import Pattern, Union
 from pathlib import Path
+
 import requests
 
 from bs4 import BeautifulSoup
-from core_utils.config_dto import ConfigDTO
-from core_utils.constants import CRAWLER_CONFIG_PATH, ASSETS_PATH
+
 from core_utils.article.article import Article
 from core_utils.article.io import to_raw, to_meta
+from core_utils.config_dto import ConfigDTO
+from core_utils.constants import CRAWLER_CONFIG_PATH, ASSETS_PATH
 
 
 class IncorrectSeedURLError(Exception):
