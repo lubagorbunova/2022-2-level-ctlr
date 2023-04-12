@@ -195,7 +195,6 @@ def make_request(url: str, config: Config) -> requests.models.Response:
     headers = config.get_headers()
     timeout = config.get_timeout()
     response = requests.get(url=url, headers=headers, timeout=timeout)
-    sleep(randint(0, 3))
     return response
 
 
@@ -303,7 +302,7 @@ class HTMLParser:
                       'ноября': '11',
                       'декабря': '12'}
         if len(date_str) > 5:
-            for key, value in month_dict:
+            for key, value in month_dict.items():
                 if key in date_str:
                     date_str = date_str.replace(key, value)
             return datetime.datetime.strptime(date_str, '%d %m, %H:%M')
