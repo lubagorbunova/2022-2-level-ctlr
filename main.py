@@ -44,19 +44,29 @@ def main():
     '''
 
 def main_new():
-    url = 'https://primamedia.ru/news/1482532/?from=37'
+    url = 'https://primamedia.ru/news/1484630/?from=19'
     response = requests.get(url, headers={'user-agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36'})
     print(response.status_code)
 
     main_bs = BeautifulSoup(response.text, 'lxml')
-    print(main_bs)
-    #title_bs = main_bs.find_all('h1', class_='page_fullnews exis-photo')
-    title_bs = main_bs.find_all('h1')
-    print(title_bs, type(title_bs))
+    date = main_bs.find(class_='fn-rubric-link').get_text()
+    import datetime
+    " ".join(date.split())
+    date = date.strip()
+    date = date.replace('апреля', '04')
+    print(date)
+    date_time = datetime.datetime.strptime(date, '%d %m, %H:%M')
+    print(date_time, type(date_time))
 
-    body_bs = main_bs.find_all('div', class_='page-content')[0]
-    all_paragraphs = body_bs.find_all('p')
-    print(len(all_paragraphs))
+
+    #print(main_bs)
+    #title_bs = main_bs.find_all('h1', class_='page_fullnews exis-photo')
+    #title_bs = main_bs.find_all('h1')
+    #print(title_bs, type(title_bs))
+
+    #body_bs = main_bs.find_all('div', class_='page-content')[0]
+    #all_paragraphs = body_bs.find_all('p')
+    #print(len(all_paragraphs))
 
 if __name__ == '__main__':
     main_new()

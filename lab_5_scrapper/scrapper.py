@@ -14,6 +14,8 @@ import datetime
 from core_utils.article.article import Article
 from core_utils.article.io import to_raw, to_meta
 import shutil
+from random import randint
+from time import sleep
 
 
 class IncorrectSeedURLError(Exception):
@@ -67,6 +69,11 @@ class IncorrectVerifyError(Exception):
 class UnavailableWebsiteError(Exception):
     """
     Website doesn't respond
+    """
+
+class NoMetaException(Exception):
+    """
+    Website doesn't have meta information
     """
 
 class Config:
@@ -188,8 +195,7 @@ def make_request(url: str, config: Config) -> requests.models.Response:
     headers = config.get_headers()
     timeout = config.get_timeout()
     response = requests.get(url=url, headers=headers, timeout=timeout)
-    #if not response.status_code == 200:
-    #    raise Exception
+    sleep(randint(0, 3))
     return response
 
 
@@ -213,14 +219,12 @@ class Crawler:
         Finds and retrieves URL from HTML
         """
         all_links_bs = article_bs.find_all('a')
-        #links = []
         for link_bs in all_links_bs:
             link = link_bs.get('href')
             if link is None:
                 continue
             elif link[0:8] == 'https://' and 'news' in link and 'from' in link:
                 self.urls.append(link)
-                #return link
         return ''
 
     def find_articles(self) -> None:
@@ -275,17 +279,36 @@ class HTMLParser:
             self.article.title = article_soup.find('h1').get_text()
             self.article.author = ["NOT FOUND"]
             self.article.topics = article_soup.find(class_='fn-rubric-a').get_text()
-        except:
+            date = article_soup.find(class_='fn-rubric-link').get_text()
+            self.article.date = self.unify_date_format(date)
+        except NoMetaException:
             pass
-        # don't forget to change the way I find the date
-        self.article.date = datetime.datetime.strptime('09/19/22 13:55:26', '%m/%d/%y %H:%M:%S')
 
     def unify_date_format(self, date_str: str) -> datetime.datetime:
         """
         Unifies date format
         """
-
-        pass
+        " ".join(date_str.split())
+        date_str = date_str.strip()
+        month_dict = {'января': '1',
+                      'февраля': '2',
+                      'марта': '3',
+                      'апреля': '4',
+                      'мая': '5',
+                      'июня': '6',
+                      'июля': '7',
+                      'августа': '8',
+                      'сентября': '9',
+                      'октября': '10',
+                      'ноября': '11',
+                      'декабря': '12'}
+        if len(date_str) > 5:
+            for key, value in month_dict:
+                if key in date_str:
+                    date_str = date_str.replace(key, value)
+            return datetime.datetime.strptime(date_str, '%d %m, %H:%M')
+        else:
+            return datetime.datetime.strptime(date_str, '%H:%M')
 
     def parse(self) -> Union[Article, bool, list]:
         """
@@ -319,9 +342,8 @@ def main() -> None:
     for i, url in enumerate(urls, start=1):
         parser = HTMLParser(full_url=url, article_id=i, config=configuration)
         article = parser.parse()
-        if isinstance(article, Article):
-            to_raw(article)
-            to_meta(article)
+        to_raw(article)
+        to_meta(article)
 
 
 if __name__ == "__main__":
