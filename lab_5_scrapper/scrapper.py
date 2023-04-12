@@ -6,12 +6,10 @@ import json
 import os.path
 import re
 import shutil
-
-from typing import Pattern, Union
 from pathlib import Path
+from typing import Pattern, Union
 
 import requests
-
 from bs4 import BeautifulSoup
 
 from core_utils.article.article import Article
