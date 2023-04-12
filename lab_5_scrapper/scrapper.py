@@ -6,9 +6,9 @@ import os.path
 import re
 import datetime
 import shutil
-import requests
 from typing import Pattern, Union
 from pathlib import Path
+import requests
 from bs4 import BeautifulSoup
 from core_utils.config_dto import ConfigDTO
 from core_utils.constants import CRAWLER_CONFIG_PATH, ASSETS_PATH
@@ -272,7 +272,7 @@ class HTMLParser:
         try:
             self.article.title = article_soup.find('h1').get_text()
             self.article.author = ["NOT FOUND"]
-            self.article.topics = article_soup.find(class_='fn-rubric-a').get_text()
+            self.article.topics = list(article_soup.find(class_='fn-rubric-a').get_text())
             date = article_soup.find(class_='fn-rubric-link').get_text()
             self.article.date = self.unify_date_format(date)
         except NoMetaException:
