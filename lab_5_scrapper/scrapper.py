@@ -4,77 +4,72 @@ Crawler implementation
 import json
 import os.path
 import re
+import datetime
+import shutil
+import requests
 from typing import Pattern, Union
+from pathlib import Path
+from bs4 import BeautifulSoup
 from core_utils.config_dto import ConfigDTO
 from core_utils.constants import CRAWLER_CONFIG_PATH, ASSETS_PATH
-from pathlib import Path
-import requests
-from bs4 import BeautifulSoup
-import datetime
 from core_utils.article.article import Article
 from core_utils.article.io import to_raw, to_meta
-import shutil
-from random import randint
-from time import sleep
 
 
 class IncorrectSeedURLError(Exception):
     """
-    seed URL does not match standard pattern "https?://w?w?w?." or does not correspond to the target website
+    seed URL does not match standard pattern "https?://w?w?w?."
+    or does not correspond to the target website
     """
-    pass
 
 
 class NumberOfArticlesOutOfRangeError(Exception):
     """
     total number of articles is out of range from 1 to 150
     """
-    pass
 
 
 class IncorrectNumberOfArticlesError(Exception):
     """
     total number of articles to parse is not integer
     """
-    pass
 
 
 class IncorrectHeadersError(Exception):
     """
     headers are not in a form of dictionary
     """
-    pass
 
 
 class IncorrectEncodingError(Exception):
     """
     encoding must be specified as a string
     """
-    pass
 
 
 class IncorrectTimeoutError(Exception):
     """
     timeout value must be a positive integer less than 60
     """
-    pass
 
 
 class IncorrectVerifyError(Exception):
     """
     verify certificate value must either be True or False
     """
-    pass
+
 
 class UnavailableWebsiteError(Exception):
     """
     Website doesn't respond
     """
 
+
 class NoMetaException(Exception):
     """
     Website doesn't have meta information
     """
+
 
 class Config:
     """
@@ -137,11 +132,13 @@ class Config:
             raise IncorrectHeadersError
         if not isinstance(self.config.encoding, str):
             raise IncorrectEncodingError
-        if not isinstance(self.config.timeout, int) or self.config.timeout < 0 or self.config.timeout > 60:
+        if (not isinstance(self.config.timeout, int)
+                or self.config.timeout < 0 or self.config.timeout > 60):
             raise IncorrectTimeoutError
         if not isinstance(self.config.headless_mode, bool):
             raise IncorrectVerifyError
-        if not(self.config.should_verify_certificate is True or self.config.should_verify_certificate is False):
+        if not(self.config.should_verify_certificate is True
+               or self.config.should_verify_certificate is False):
             raise IncorrectVerifyError
 
     def get_seed_urls(self) -> list[str]:
@@ -220,9 +217,7 @@ class Crawler:
         all_links_bs = article_bs.find_all('a')
         for link_bs in all_links_bs:
             link = link_bs.get('href')
-            if link is None:
-                continue
-            elif link[0:8] == 'https://' and 'news' in link and 'from' in link:
+            if link[0:8] == 'https://' and 'news' in link and 'from' in link:
                 self.urls.append(link)
         return ''
 
