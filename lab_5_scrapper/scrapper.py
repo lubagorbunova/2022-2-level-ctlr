@@ -216,12 +216,11 @@ class Crawler:
         """
         Finds and retrieves URL from HTML
         """
-        all_links_bs = article_bs.find_all('a')
-        for link_bs in all_links_bs:
-            link = link_bs.get('href')
-            if link[0:8] == 'https://' and 'news' in link and 'from' in link:
-                self.urls.append(link)
-        return ''
+        link = article_bs.get('href')
+        if link[0:8] == 'https://' and 'news' in link and 'from' in link:
+            return link
+        else:
+            return ''
 
     def find_articles(self) -> None:
         """
@@ -231,7 +230,11 @@ class Crawler:
             try:
                 response = make_request(seed_url, self.config)
                 main_bs = BeautifulSoup(response.text, 'lxml')
-                self._extract_url(main_bs)
+                all_links_bs = main_bs.find_all('a')
+                for link_bs in all_links_bs:
+                    link = self._extract_url(link_bs)
+                    if not link == '':
+                        self.urls.append(link)
             except UnavailableWebsiteError:
                 continue
 
@@ -271,13 +274,17 @@ class HTMLParser:
         """
         Finds meta information of article
         """
-        self.article.title = article_soup.find('h1').get_text()
-        self.article.author = ["NOT FOUND"]
-        self.article.topics = list(article_soup.find(class_='fn-rubric-a').get_text())
-        self.article.date = self.unify_date_format(article_soup.find(class_='fn-rubric-link').get_text())
-        if isinstance(date, bs4.element.Tag)
-        #except:
-        #    self.article.date = self.unify_date_format(article_soup.find(class_='pldate').get_text())
+        try:
+            self.article.title = article_soup.find('h1').get_text()
+            self.article.author = ["NOT FOUND"]
+            self.article.topics = list(article_soup.find(class_='fn-rubric-a').get_text())
+            if article_soup.find(class_='fn-rubric-link') is None:
+                date = article_soup.find(class_='pldate').get_text()
+            else:
+                date = article_soup.find(class_='fn-rubric-link').get_text()
+            self.article.date = self.unify_date_format(date)
+        except NoMetaException:
+            pass
 
     def unify_date_format(self, date_str: str) -> datetime.datetime:
         """
@@ -297,7 +304,9 @@ class HTMLParser:
                       'октября': '10',
                       'ноября': '11',
                       'декабря': '12'}
-        if len(date_str) > 5:
+        if len(date_str) == 10:
+            res = datetime.datetime.strptime(date_str, '%d.%m.%Y')
+        elif len(date_str) > 5:
             for key, value in month_dict.items():
                 if key in date_str:
                     date_str = date_str.replace(key, value)
