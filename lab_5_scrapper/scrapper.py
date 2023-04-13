@@ -221,7 +221,8 @@ class Crawler:
             res = link
         else:
             res = ''
-        return res
+        if isinstance(res, str):
+            return res
 
     def find_articles(self) -> None:
         """
