@@ -218,9 +218,10 @@ class Crawler:
         """
         link = article_bs.get('href')
         if link[0:8] == 'https://' and 'news' in link and 'from' in link:
-            return link
+            res = link
         else:
-            return ''
+            res = ''
+        return res
 
     def find_articles(self) -> None:
         """
@@ -233,7 +234,7 @@ class Crawler:
                 all_links_bs = main_bs.find_all('a')
                 for link_bs in all_links_bs:
                     link = self._extract_url(link_bs)
-                    if not link == '':
+                    if link != '':
                         self.urls.append(link)
             except UnavailableWebsiteError:
                 continue
