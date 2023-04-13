@@ -216,7 +216,7 @@ class Crawler:
         """
         Finds and retrieves URL from HTML
         """
-        link = article_bs.get('href')
+        link = str(article_bs.get('href'))
         if link[0:8] == 'https://' and 'news' in link and 'from' in link:
             res = link
         else:
