@@ -49,7 +49,9 @@ def main_new():
     print(response.status_code)
 
     main_bs = BeautifulSoup(response.text, 'lxml')
-    date = main_bs.find(class_='fn-rubric-link').get_text()
+    date1 = main_bs.find(class_='fn-rubric-link')
+    date = date1.get_text()
+    print(type(date1))
     import datetime
     " ".join(date.split())
     date = date.strip()
