@@ -1,5 +1,8 @@
+import os.path
+
 import requests
 from bs4 import BeautifulSoup
+from core_utils.article.article import Article
 
 
 def main():
@@ -49,26 +52,73 @@ def main_new():
     print(response.status_code)
 
     main_bs = BeautifulSoup(response.text, 'lxml')
-    date1 = main_bs.find(class_='fcfv')
-    date = date1.get_text()
-    print(type(date1))
-    import datetime
-    " ".join(date.split())
-    date = date.strip()
-    date = date.replace('апреля', '04')
-    print(date)
-    date_time = datetime.datetime.strptime(date, '%d %m, %H:%M')
-    print(date_time, type(date_time))
+    print(main_bs)
+    title_bs = main_bs.find_all('h1', class_='page_fullnews exis-photo')
+    title_bs = main_bs.find_all('h1')
+    print(title_bs, type(title_bs))
+
+    body_bs = main_bs.find_all('div', class_='page-content')[0]
+    all_paragraphs = body_bs.find_all('p')
+    print(len(all_paragraphs))
 
 
-    #print(main_bs)
-    #title_bs = main_bs.find_all('h1', class_='page_fullnews exis-photo')
-    #title_bs = main_bs.find_all('h1')
-    #print(title_bs, type(title_bs))
+class EmptyDirectoryError(Exception):
+    """
+    a directory is empty
+    """
 
-    #body_bs = main_bs.find_all('div', class_='page-content')[0]
-    #all_paragraphs = body_bs.find_all('p')
-    #print(len(all_paragraphs))
+class InconsistentDatasetError(Exception):
+    """
+     IDs contain slips, number of meta and raw files is not equal, files are empty
+    """
+
+class CorpusManager:
+    def __init__(self, path_to_raw_txt_data):
+        self.path_to_raw_txt_data = path_to_raw_txt_data
+        self._storage = {}
+        self._validate_dataset()
+        self._scan_dataset()
+
+    def _validate_dataset(self) -> None:
+        """
+        a dataset validation
+        """
+        files_list = os.listdir(self.path_to_raw_txt_data)
+        max_number = int(len(files_list)/2)
+        for i in range(max_number):
+            meta_filename = str(i+1)+'_meta.json'
+            raw_filename = str(i+1) + '_raw.txt'
+            if meta_filename not in files_list or raw_filename not in files_list:
+                raise InconsistentDatasetError
+        if not os.path.isdir(self.path_to_raw_txt_data):
+            raise NotADirectoryError
+        if not os.path.exists(self.path_to_raw_txt_data):
+            raise FileNotFoundError
+        if len(files_list) == 0:
+            raise EmptyDirectoryError
+
+    def _scan_dataset(self) -> None:
+        """
+        create a storage(dict) with number as a key and an Article as a value
+        """
+        files_list = os.listdir(self.path_to_raw_txt_data)
+        max_number = int(len(files_list) / 2)
+        for i in range(max_number):
+            article = Article(url=None, article_id=i)
+            self._storage[i+1] = article
+
+    def get_articles(self):
+        return self._storage
+
+
+def main_pipeline():
+    # initialize CorpusManager with ASSETS_PATH
+    # validate: path exists, leads to a directory, numeration is from 1 to n without splits,
+    # there are as many raw files as meta files
+    # and scan: create a storage(dict) with number as a key and an Article as a value
+    corpus_manager = CorpusManager('D:\hse\CTLR LABS\/2022-2-level-ctlr\/tmp\/articles')
+    articles = corpus_manager.get_articles()
+    print(articles)
 
 if __name__ == '__main__':
-    main_new()
+    main_pipeline()

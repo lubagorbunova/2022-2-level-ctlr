@@ -217,7 +217,7 @@ class Crawler:
         Finds and retrieves URL from HTML
         """
         link = str(article_bs.get('href'))
-        if link[0:8] == 'https://' and 'news' in link and 'from' in link:
+        if re.match(r'https://primamedia.ru/news/\d+/\?from=\d+', link):
             res = link
         else:
             res = ''
@@ -344,8 +344,7 @@ def main() -> None:
     prepare_environment(ASSETS_PATH)
     crawler = Crawler(config=configuration)
     crawler.find_articles()
-    urls = crawler.urls
-    for i, url in enumerate(urls, start=1):
+    for i, url in enumerate(crawler.urls, start=1):
         parser = HTMLParser(full_url=url, article_id=i, config=configuration)
         article = parser.parse()
         if isinstance(article, Article):
