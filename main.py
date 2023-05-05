@@ -3,6 +3,8 @@ import os.path
 import requests
 from bs4 import BeautifulSoup
 from core_utils.article.article import Article
+from pymystem3 import Mystem
+import json
 
 
 def main():
@@ -111,6 +113,23 @@ class CorpusManager:
         return self._storage
 
 
+def count_nouns(text, m):
+    noun_count = 0
+    gram_info_str = json.dumps(m.analyze(text), ensure_ascii=False)
+    gram_info = json.loads(gram_info_str)
+    for word in gram_info:
+        if 'analysis' in word.keys():
+            if word['analysis']:
+                if 'gr' in word['analysis'][0].keys():
+                    if 'S' in word['analysis'][0]['gr']:
+                        noun_count += 1
+    return noun_count
+
+
+def delete_punctuation(text, m):
+    lemmas = m.lemmatize(text)
+    print(lemmas)
+
 def main_pipeline():
     # initialize CorpusManager with ASSETS_PATH
     # validate: path exists, leads to a directory, numeration is from 1 to n without splits,
@@ -120,5 +139,16 @@ def main_pipeline():
     articles = corpus_manager.get_articles()
     print(articles)
 
+
+def main_mystem():
+    # calculate number of nouns
+    # clean the text from the punctuation mark and lowercase
+    # calculate other parts of speech
+    m = Mystem()
+    with open('D:\hse\CTLR LABS\/2022-2-level-ctlr\/tmp\/articles\/1_raw.txt', mode='r', encoding='utf-8') as f:
+        text = f.read()
+        noun_count = count_nouns(text, m)
+        print(noun_count)
+
 if __name__ == '__main__':
-    main_pipeline()
+    main_mystem()

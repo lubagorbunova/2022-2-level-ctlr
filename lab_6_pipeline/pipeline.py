@@ -4,9 +4,22 @@ Pipeline for CONLL-U formatting
 from pathlib import Path
 from typing import List
 
+from core_utils.article.article import Article
 from core_utils.article.article import SentenceProtocol
 from core_utils.article.ud import OpencorporaTagProtocol, TagConverter
+from core_utils.constants import ASSETS_PATH
 
+
+class EmptyDirectoryError(Exception):
+    """
+    a directory is empty
+    """
+
+
+class InconsistentDatasetError(Exception):
+    """
+     IDs contain slips, number of meta and raw files is not equal, files are empty
+    """
 
 # pylint: disable=too-few-public-methods
 class CorpusManager:
@@ -18,22 +31,45 @@ class CorpusManager:
         """
         Initializes CorpusManager
         """
+        self.path_to_raw_txt_data = path_to_raw_txt_data
+        self._storage = {}
+        self._validate_dataset()
+        self._scan_dataset()
 
     def _validate_dataset(self) -> None:
         """
         Validates folder with assets
         """
+        files = self.path_to_raw_txt_data.glob('*.*')
+        files_list = [str(x) for x in files if x.is_file()]
+        max_number = int(len(files_list) / 2)
+        for i in range(max_number):
+            meta_filename = 'D:\\hse\\CTLR LABS\\2022-2-level-ctlr\\tmp\\articles\\' + str(i + 1) + '_meta.json'
+            raw_filename = 'D:\\hse\\CTLR LABS\\2022-2-level-ctlr\\tmp\\articles\\' + str(i + 1) + '_raw.txt'
+            if meta_filename not in files_list or raw_filename not in files_list:
+                raise InconsistentDatasetError
+        if not self.path_to_raw_txt_data.is_dir():
+            raise NotADirectoryError
+        if not self.path_to_raw_txt_data.exists():
+            raise FileNotFoundError
+        if len(files_list) == 0:
+            raise EmptyDirectoryError
 
     def _scan_dataset(self) -> None:
         """
         Register each dataset entry
         """
+        files_list = list(self.path_to_raw_txt_data.glob('*.*'))
+        max_number = int(len(files_list) / 2)
+        for i in range(max_number):
+            article = Article(url=None, article_id=i)
+            self._storage[i + 1] = article
 
     def get_articles(self) -> dict:
         """
         Returns storage params
         """
-
+        return self._storage
 
 class MorphologicalTokenDTO:
     """
@@ -181,6 +217,10 @@ def main() -> None:
     """
     Entrypoint for pipeline module
     """
+    path = Path(ASSETS_PATH)
+    corpus_manager = CorpusManager(path_to_raw_txt_data=path)
+    articles = corpus_manager.get_articles()
+    print(articles)
 
 
 if __name__ == "__main__":
