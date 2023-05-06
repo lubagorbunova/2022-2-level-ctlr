@@ -4,10 +4,11 @@ Pipeline for CONLL-U formatting
 from pathlib import Path
 from typing import List
 
-from core_utils.article.article import Article
+from core_utils.article.article import Article, split_by_sentence
 from core_utils.article.article import SentenceProtocol
 from core_utils.article.ud import OpencorporaTagProtocol, TagConverter
 from core_utils.constants import ASSETS_PATH
+from core_utils.article.io import to_cleaned, from_raw
 
 
 class EmptyDirectoryError(Exception):
@@ -80,6 +81,9 @@ class MorphologicalTokenDTO:
         """
         Initializes MorphologicalTokenDTO
         """
+        self.lemma = ''
+        self.pos = ''
+        self.tags = ''
 
 
 class ConlluToken:
@@ -91,6 +95,7 @@ class ConlluToken:
         """
         Initializes ConlluToken
         """
+        self._text = text
 
     def set_morphological_parameters(self, parameters: MorphologicalTokenDTO) -> None:
         """
@@ -111,7 +116,7 @@ class ConlluToken:
         """
         Returns lowercase original form of a token
         """
-
+        return self._text.lower()
 
 class ConlluSentence(SentenceProtocol):
     """
@@ -122,6 +127,9 @@ class ConlluSentence(SentenceProtocol):
         """
         Initializes ConlluSentence
         """
+        self._position = position
+        self._tokens = tokens
+        self._text = text
 
     def get_conllu_text(self, include_morphological_tags: bool) -> str:
         """
@@ -132,11 +140,16 @@ class ConlluSentence(SentenceProtocol):
         """
         Returns the lowercase representation of the sentence
         """
+        sentence = ''
+        for word in self._tokens:
+            sentence += word.get_cleaned()
+        return sentence
 
     def get_tokens(self) -> list[ConlluToken]:
         """
         Returns sentences from ConlluSentence
         """
+        return self._tokens
 
 
 class MystemTagConverter(TagConverter):
@@ -180,16 +193,30 @@ class MorphologicalAnalysisPipeline:
         """
         Initializes MorphologicalAnalysisPipeline
         """
+        self._corpus = corpus_manager
 
     def _process(self, text: str) -> List[ConlluSentence]:
         """
         Returns the text representation as the list of ConlluSentence
         """
+        conllu_sentences = []
+        sentences = split_by_sentence(text)
+        for position, sentence in enumerate(sentences):
+            conllu_list = []
+            for text in sentence.split():
+                conllu_list.append(ConlluToken(text))
+            conllu_sentences.append(ConlluSentence(position, sentence, conllu_list))
+        return conllu_sentences
 
     def run(self) -> None:
         """
         Performs basic preprocessing and writes processed text to files
         """
+        for article in self._corpus.get_articles().values():
+            #from_raw(article.url, article)
+            sentences = self._process(article.text)
+            article.set_conllu_sentences(sentences)
+            to_cleaned(article)
 
 
 class AdvancedMorphologicalAnalysisPipeline(MorphologicalAnalysisPipeline):
@@ -219,8 +246,8 @@ def main() -> None:
     """
     path = Path(ASSETS_PATH)
     corpus_manager = CorpusManager(path_to_raw_txt_data=path)
-    articles = corpus_manager.get_articles()
-    print(articles)
+    pipeline = MorphologicalAnalysisPipeline(corpus_manager)
+    pipeline.run()
 
 
 if __name__ == "__main__":
