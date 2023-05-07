@@ -217,7 +217,7 @@ class Crawler:
         Finds and retrieves URL from HTML
         """
         link = str(article_bs.get('href'))
-        if re.match(r'https://primamedia.ru/news/\d+/\?from=\d+', link):
+        if link[0:8] == 'https://' and 'news' in link and 'from' in link:
             res = link
         else:
             res = ''

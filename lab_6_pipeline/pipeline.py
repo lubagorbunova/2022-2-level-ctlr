@@ -1,8 +1,10 @@
 """
 Pipeline for CONLL-U formatting
 """
+import re
 from pathlib import Path
 from typing import List
+from difflib import SequenceMatcher
 
 from core_utils.article.article import Article, split_by_sentence
 from core_utils.article.article import SentenceProtocol
@@ -41,20 +43,37 @@ class CorpusManager:
         """
         Validates folder with assets
         """
-        files = self.path_to_raw_txt_data.glob('*.*')
-        files_list = [str(x) for x in files if x.is_file()]
-        max_number = int(len(files_list) / 2)
-        for i in range(max_number):
-            meta_filename = 'D:\\hse\\CTLR LABS\\2022-2-level-ctlr\\tmp\\articles\\' + str(i + 1) + '_meta.json'
-            raw_filename = 'D:\\hse\\CTLR LABS\\2022-2-level-ctlr\\tmp\\articles\\' + str(i + 1) + '_raw.txt'
-            if meta_filename not in files_list or raw_filename not in files_list:
-                raise InconsistentDatasetError
-        if not self.path_to_raw_txt_data.is_dir():
-            raise NotADirectoryError
+        meta_files = list(self.path_to_raw_txt_data.glob('*_meta.json'))
+        raw_files = list(self.path_to_raw_txt_data.glob('*_raw.txt'))
+        meta_files_list = [str(x) for x in meta_files]
+        meta_files_list.sort()
+        raw_files_list = [str(x) for x in raw_files]
+        raw_files_list.sort()
+        max_number = len(meta_files_list)
+        path = str(self.path_to_raw_txt_data)
+
         if not self.path_to_raw_txt_data.exists():
             raise FileNotFoundError
-        if len(files_list) == 0:
+
+        if not self.path_to_raw_txt_data.is_dir():
+            raise NotADirectoryError
+
+        if max_number == 0:
             raise EmptyDirectoryError
+
+        if len(meta_files_list) != len(raw_files_list):
+            raise InconsistentDatasetError
+        for file in meta_files:
+            if file.stat().st_size == 0:
+                raise InconsistentDatasetError
+        for file in raw_files:
+            if file.stat().st_size == 0:
+                raise InconsistentDatasetError
+        for i in range(max_number):
+            filename = f'{path}\{str(i+1)}_raw.txt'
+            print(filename)
+            if filename not in raw_files_list:
+                raise InconsistentDatasetError
 
     def _scan_dataset(self) -> None:
         """
