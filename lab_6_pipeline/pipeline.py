@@ -4,6 +4,7 @@ Pipeline for CONLL-U formatting
 from pathlib import Path
 from typing import List
 import string
+import re
 
 from core_utils.article.article import split_by_sentence
 from core_utils.article.article import SentenceProtocol
@@ -60,8 +61,8 @@ class CorpusManager:
         if max_number == 0:
             raise EmptyDirectoryError
 
-        #if len(meta_files_list) != len(raw_files_list):
-        #    raise InconsistentDatasetError
+        if len(meta_files_list) != len(raw_files_list):
+            raise InconsistentDatasetError
         for file in meta_files:
             if not file.stat().st_size:
                 raise InconsistentDatasetError
@@ -70,9 +71,8 @@ class CorpusManager:
                 raise InconsistentDatasetError
         for i in range(max_number):
             filename_raw = path + '\\' + str(i+1) + '_raw.txt'
-        #    filename_meta = path + '\\' + str(i + 1) + '_meta.json'
-            if filename_raw not in raw_files_list:
-                    #or filename_meta not in meta_files_list:
+            filename_meta = path + '\\' + str(i + 1) + '_meta.json'
+            if filename_raw not in raw_files_list or filename_meta not in meta_files_list:
                 raise InconsistentDatasetError
 
     def _scan_dataset(self) -> None:
@@ -100,9 +100,6 @@ class MorphologicalTokenDTO:
         """
         Initializes MorphologicalTokenDTO
         """
-        self.lemma = ''
-        self.pos = ''
-        self.tags = ''
 
 
 class ConlluToken:
@@ -135,9 +132,9 @@ class ConlluToken:
         """
         Returns lowercase original form of a token
         """
-        text = str(self._text).lower()
-        translating = str.maketrans('', '', string.punctuation)
-        return text.translate(translating)
+        text = self._text
+        res = re.sub(r'[^\w\s]', '', text)
+        return res.lower()
 
 
 class ConlluSentence(SentenceProtocol):
@@ -164,9 +161,8 @@ class ConlluSentence(SentenceProtocol):
         """
         sentence = ''
         for word in self._tokens:
-            sentence += ' '
-            sentence += word.get_cleaned()
-        return ' '.join(sentence.split())
+            sentence += ' '+word.get_cleaned()
+        return ' '.join(sentence.split()).lower()
 
     def get_tokens(self) -> list[ConlluToken]:
         """
