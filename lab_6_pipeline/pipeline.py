@@ -1,12 +1,11 @@
 """
 Pipeline for CONLL-U formatting
 """
-import re
 from pathlib import Path
 from typing import List
 import string
 
-from core_utils.article.article import Article, split_by_sentence
+from core_utils.article.article import split_by_sentence
 from core_utils.article.article import SentenceProtocol
 from core_utils.article.ud import OpencorporaTagProtocol, TagConverter
 from core_utils.constants import ASSETS_PATH
@@ -46,9 +45,7 @@ class CorpusManager:
         meta_files = list(self.path_to_raw_txt_data.glob('*_meta.json'))
         raw_files = list(self.path_to_raw_txt_data.glob('*_raw.txt'))
         meta_files_list = [str(x) for x in meta_files]
-        meta_files_list.sort()
         raw_files_list = [str(x) for x in raw_files]
-        raw_files_list.sort()
         max_number = len(meta_files_list)
         path = str(self.path_to_raw_txt_data)
 
@@ -71,7 +68,6 @@ class CorpusManager:
                 raise InconsistentDatasetError
         for i in range(max_number):
             filename = f'{path}\{str(i+1)}_raw.txt'
-            print(filename)
             if filename not in raw_files_list:
                 raise InconsistentDatasetError
 
@@ -134,10 +130,9 @@ class ConlluToken:
         """
         Returns lowercase original form of a token
         """
-        text = self._text.lower()
+        text = str(self._text).lower()
         translating = str.maketrans('', '', string.punctuation)
-        new_string = text.translate(translating)
-        return new_string
+        return text.translate(translating)
 
 class ConlluSentence(SentenceProtocol):
     """
