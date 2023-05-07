@@ -305,7 +305,7 @@ class HTMLParser:
                       'октября': '10',
                       'ноября': '11',
                       'декабря': '12'}
-        if len(date_str) == 10:
+        if len(date_str) == 10 or len(date_str) == 9:
             res = datetime.datetime.strptime(date_str, '%d.%m.%Y')
         elif len(date_str) > 5:
             for key, value in month_dict.items():
