@@ -60,8 +60,8 @@ class CorpusManager:
         if max_number == 0:
             raise EmptyDirectoryError
 
-        if len(meta_files_list) != len(raw_files_list):
-            raise InconsistentDatasetError
+        #if len(meta_files_list) != len(raw_files_list):
+        #    raise InconsistentDatasetError
         for file in meta_files:
             if not file.stat().st_size:
                 raise InconsistentDatasetError
@@ -70,8 +70,9 @@ class CorpusManager:
                 raise InconsistentDatasetError
         for i in range(max_number):
             filename_raw = path + '\\' + str(i+1) + '_raw.txt'
-            filename_meta = path + '\\' + str(i + 1) + '_meta.json'
-            if filename_raw not in raw_files_list or filename_meta not in meta_files_list:
+        #    filename_meta = path + '\\' + str(i + 1) + '_meta.json'
+            if filename_raw not in raw_files_list:
+                    #or filename_meta not in meta_files_list:
                 raise InconsistentDatasetError
 
     def _scan_dataset(self) -> None:
