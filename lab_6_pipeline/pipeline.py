@@ -69,7 +69,8 @@ class CorpusManager:
             if file.stat().st_size == 0:
                 raise InconsistentDatasetError
         for i in range(max_number):
-            filename = f'{path}\\{str(i+1)}_raw.txt'
+            filename = path + '\\' + str(i+1) + '_raw.txt'
+            print(filename)
             if filename not in raw_files_list:
                 raise InconsistentDatasetError
 
