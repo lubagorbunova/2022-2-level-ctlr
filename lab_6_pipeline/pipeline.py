@@ -4,7 +4,7 @@ Pipeline for CONLL-U formatting
 import re
 from pathlib import Path
 from typing import List
-from difflib import SequenceMatcher
+import string
 
 from core_utils.article.article import Article, split_by_sentence
 from core_utils.article.article import SentenceProtocol
@@ -79,11 +79,10 @@ class CorpusManager:
         """
         Register each dataset entry
         """
-        files_list = list(self.path_to_raw_txt_data.glob('*.*'))
-        max_number = int(len(files_list) / 2)
-        for i in range(max_number):
-            article = Article(url=None, article_id=i)
-            self._storage[i + 1] = article
+        files_list = self.path_to_raw_txt_data.glob('*_raw.txt')
+        for file in files_list:
+            article = from_raw(file)
+            self._storage.update({article.article_id: article})
 
     def get_articles(self) -> dict:
         """
@@ -135,7 +134,10 @@ class ConlluToken:
         """
         Returns lowercase original form of a token
         """
-        return self._text.lower()
+        text = self._text.lower()
+        translating = str.maketrans('', '', string.punctuation)
+        new_string = text.translate(translating)
+        return new_string
 
 class ConlluSentence(SentenceProtocol):
     """
@@ -161,8 +163,9 @@ class ConlluSentence(SentenceProtocol):
         """
         sentence = ''
         for word in self._tokens:
+            sentence += ' '
             sentence += word.get_cleaned()
-        return sentence
+        return ' '.join(sentence.split())
 
     def get_tokens(self) -> list[ConlluToken]:
         """
