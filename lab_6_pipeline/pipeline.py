@@ -24,6 +24,8 @@ class InconsistentDatasetError(Exception):
     """
 
 # pylint: disable=too-few-public-methods
+
+
 class CorpusManager:
     """
     Works with articles and stores them
@@ -67,7 +69,7 @@ class CorpusManager:
             if file.stat().st_size == 0:
                 raise InconsistentDatasetError
         for i in range(max_number):
-            filename = f'{path}\{str(i+1)}_raw.txt'
+            filename = f'{path}\\{str(i+1)}_raw.txt'
             if filename not in raw_files_list:
                 raise InconsistentDatasetError
 
@@ -85,6 +87,7 @@ class CorpusManager:
         Returns storage params
         """
         return self._storage
+
 
 class MorphologicalTokenDTO:
     """
@@ -133,6 +136,7 @@ class ConlluToken:
         text = str(self._text).lower()
         translating = str.maketrans('', '', string.punctuation)
         return text.translate(translating)
+
 
 class ConlluSentence(SentenceProtocol):
     """
@@ -230,7 +234,6 @@ class MorphologicalAnalysisPipeline:
         Performs basic preprocessing and writes processed text to files
         """
         for article in self._corpus.get_articles().values():
-            #from_raw(article.url, article)
             sentences = self._process(article.text)
             article.set_conllu_sentences(sentences)
             to_cleaned(article)
