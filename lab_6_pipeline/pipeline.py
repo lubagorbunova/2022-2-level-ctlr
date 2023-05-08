@@ -5,7 +5,6 @@ from pathlib import Path
 from typing import List
 import string
 import re
-from pymystem3 import Mystem
 
 from core_utils.article.article import split_by_sentence
 from core_utils.article.article import SentenceProtocol
