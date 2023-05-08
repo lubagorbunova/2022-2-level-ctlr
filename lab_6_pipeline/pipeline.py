@@ -5,12 +5,13 @@ from pathlib import Path
 from typing import List
 import string
 import re
+from pymystem3 import Mystem
 
 from core_utils.article.article import split_by_sentence
 from core_utils.article.article import SentenceProtocol
 from core_utils.article.ud import OpencorporaTagProtocol, TagConverter
 from core_utils.constants import ASSETS_PATH
-from core_utils.article.io import to_cleaned, from_raw
+from core_utils.article.io import to_cleaned, from_raw, to_conllu
 
 
 class EmptyDirectoryError(Exception):
@@ -74,6 +75,7 @@ class CorpusManager:
         #    filename_meta = path + '\\' + str(i + 1) + '_meta.json'
             if filename_raw not in raw_files_list: #or filename_meta not in meta_files_list:
                 raise InconsistentDatasetError
+            #test data in github?
 
     def _scan_dataset(self) -> None:
         """
@@ -261,7 +263,7 @@ class MorphologicalAnalysisPipeline:
             sentences = self._process(article.text)
             article.set_conllu_sentences(sentences)
             to_cleaned(article)
-
+            #to_conllu(article)
 
 class AdvancedMorphologicalAnalysisPipeline(MorphologicalAnalysisPipeline):
     """
