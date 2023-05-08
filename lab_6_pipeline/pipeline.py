@@ -100,6 +100,9 @@ class MorphologicalTokenDTO:
         """
         Initializes MorphologicalTokenDTO
         """
+        self.lemma = ""
+        self.pos = ""
+        self.tags = ""
 
 
 class ConlluToken:
@@ -112,21 +115,32 @@ class ConlluToken:
         Initializes ConlluToken
         """
         self._text = text
+        parameters = MorphologicalTokenDTO()
+        self._morphological_parameters = parameters
+        self.position = 0
 
     def set_morphological_parameters(self, parameters: MorphologicalTokenDTO) -> None:
         """
         Stores the morphological parameters
         """
+        self._morphological_parameters.tags = parameters.tags
+        self._morphological_parameters.pos = parameters.pos
+        self._morphological_parameters.lemma = parameters.lemma
 
     def get_morphological_parameters(self) -> MorphologicalTokenDTO:
         """
         Returns morphological parameters from ConlluToken
         """
+        return self._morphological_parameters
 
     def get_conllu_text(self, include_morphological_tags: bool) -> str:
         """
         String representation of the token for conllu files
         """
+        res = str(self.position) + '\t' + self._text + '\t' + self._morphological_parameters.lemma + '\t' \
+                 + self._morphological_parameters.pos + '\t' + '_' + '\t' + '_'+ '\t' + '0' + '\t' \
+                 + 'root' + '\t' + '_' + '\t' + '_'
+        return res
 
     def get_cleaned(self) -> str:
         """
@@ -154,6 +168,8 @@ class ConlluSentence(SentenceProtocol):
         """
         Creates string representation of the sentence
         """
+        return f'# sent_id = {self._position}\n' + \
+               f'# text = {self._text}\n' + self._format_tokens(include_morphological_tags)
 
     def get_cleaned_sentence(self) -> str:
         """
@@ -169,6 +185,16 @@ class ConlluSentence(SentenceProtocol):
         Returns sentences from ConlluSentence
         """
         return self._tokens
+
+    def _format_tokens(self, include_morphological_tags: bool) -> str:
+        """
+        formats tokens per newline
+        """
+        res = ''
+        for token in self._tokens:
+            text = token.get_conllu_text(include_morphological_tags)
+            res += text + '\n'
+        return res
 
 
 class MystemTagConverter(TagConverter):
