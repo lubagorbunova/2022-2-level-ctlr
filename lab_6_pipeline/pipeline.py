@@ -45,18 +45,18 @@ class CorpusManager:
         """
         Validates folder with assets
         """
-        #meta_files = list(self.path_to_raw_txt_data.glob('*_meta.json'))
-        raw_files = list(self.path_to_raw_txt_data.glob('*_raw.txt'))
-        #meta_files_list = [str(x) for x in meta_files]
-        raw_files_list = [str(x) for x in raw_files]
-        max_number = len(raw_files_list)
-        path = str(self.path_to_raw_txt_data)
-
         if not self.path_to_raw_txt_data.exists():
             raise FileNotFoundError
 
         if not self.path_to_raw_txt_data.is_dir():
             raise NotADirectoryError
+
+        # meta_files = list(self.path_to_raw_txt_data.glob('*_meta.json'))
+        raw_files = list(self.path_to_raw_txt_data.glob('*_raw.txt'))
+        # meta_files_list = [str(x) for x in meta_files]
+        raw_files_list = [str(x) for x in raw_files]
+        max_number = len(raw_files_list)
+        path = str(self.path_to_raw_txt_data)
 
         if max_number == 0:
             raise EmptyDirectoryError
@@ -69,12 +69,13 @@ class CorpusManager:
         for file in raw_files:
             if not file.stat().st_size:
                 raise InconsistentDatasetError
-        for i in range(max_number):
-            filename_raw = path + '\\' + str(i+1) + '_raw.txt'
-        #    filename_meta = path + '\\' + str(i + 1) + '_meta.json'
-            if filename_raw not in raw_files_list: #or filename_meta not in meta_files_list:
-                raise InconsistentDatasetError
-            #test data in github?
+
+        list_of_proper_ids = []
+        for id in range(max_number):
+            list_of_proper_ids.append(id+1)
+        list_of_ids = [int(file.name[:file.name.index('_')]) for file in raw_files]
+        if sorted(list_of_ids) != sorted(list_of_proper_ids):
+            raise InconsistentDatasetError
 
     def _scan_dataset(self) -> None:
         """
